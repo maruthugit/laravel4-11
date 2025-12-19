@@ -1,0 +1,87 @@
+@extends('layouts.master')
+@section('title') Coupon @stop
+@section('content')
+	<div id="page-wrapper">
+		<div class="row">
+			<div class="col-lg-12">
+				<h1 class="page-header">Coupon Camping
+				<span class="pull-right">
+				<a class="btn btn-primary" title="" data-toggle="tooltip" href="{{asset('/')}}coupon/camping/"><i class="fa fa-refresh"></i></a> 
+				@if (Permission::CheckAccessLevel(Session::get('role_id'), 12, 5, 'AND'))
+				<a class="btn btn-primary" title="" data-toggle="tooltip" href="{{asset('/')}}coupon/campingedit/0"><i class="fa fa-plus"></i></a>
+				@endif
+				</span></h1>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-lg-12">
+				@if (Session::has('message') || Session::has('success'))
+					<div class="alert alert-{{ Session::has('message') ? 'danger' : 'success' }}"><i class="fa fa-exclamation"></i> {{ Session::get(Session::has('message') ? 'message' : 'success') }}<button data-dismiss="alert" class="close" type="button">×</button></div>
+				@endif
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<h3 class="panel-title"><i class="fa fa-list"></i> Coupon Camping Listing</h3>                    
+					</div>
+					<div class="panel-body">
+						<div class="table-responsive" style="overflow-x: none">
+							<table class="table table-striped table-bordered table-hover" id="dataTables-coupon">
+								<thead>
+									<tr>
+										<th>ID</th>
+										<th>Name</th>
+										<th>Coupon</th>
+										<th>Camping Duration</th>
+										<th>Status</th>
+										<th>Last Action</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<form id="remove_frm" name="remove_frm" action="{{ asset('/') }}coupon/campingdelete" method="post">
+		<input type="hidden" name="remove_coupon_id" id="remove_coupon_id" value="" />
+	</form>
+
+	<script type="text/javascript">
+		function delete_coupon(coupon_id) {
+			if(confirm("Are you sure to delete this Camping")) {
+				var tempid = document.getElementById("remove_coupon_id");
+				tempid.value = coupon_id;
+				var tempform = document.getElementById("remove_frm");
+				tempform.submit();
+			}
+		}
+	</script>
+@stop
+
+
+@section('script')
+	$('#dataTables-coupon').dataTable({
+		"autoWidth" : false,
+		"processing": true,
+		"serverSide": true,
+		"ajax": "{{ URL::to('coupon/campinglist') }}",
+		"order" : [[0, 'desc']],
+		"columnDefs" : [{
+			"targets" : "_all",
+			"defaultContent" : ""
+		}],
+		"columns" : [
+			{ "data" : 0 },
+			{ "data" : 1 },
+			{ "data" : 2 },
+			{ "data" : 4 },
+			{ "data" : 3 },
+			{ "data" : 5 },
+			{ "data" : 6, "orderable" : false, "searchable" : false, "className" : "text-center" }
+		]
+	});
+@stop

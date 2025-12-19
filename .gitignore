@@ -1,0 +1,6 @@
+*.zip
+core.*
+*.core
+*.log
+/tmp/
+/cache/
