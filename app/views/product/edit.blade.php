@@ -1,0 +1,1612 @@
+@extends('layouts.master')
+@section('title', 'Product')
+
+<?php 
+//echo "<pre>";
+//print_r($product);
+//echo "</pre>";
+
+?>
+<script src="/js/angular_modified.js"></script>
+<link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.5.0/summernote.css" rel="stylesheet" type="text/css">
+<link href="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.5.0/summernote-bs3.css" rel="stylesheet" type="text/css">
+<link href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.0.3/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+<style>
+    
+    .suggestion-opt-box{
+        //display: none;
+        position: absolute;
+        background-color: #fff;
+        z-index: 100;
+        margin-right: 15px !important;
+        margin-left: 0px  !important;
+        font-size: 13px;
+    }
+    
+    .sel-product-base{
+        margin-bottom: 5px;
+    }
+    
+    .attach-base{
+/*        padding-left: 15px;
+        padding-right: 15px;*/
+    }
+    
+    .suggestion-opt{
+        border: solid 1px #ddd;padding: 10px;top:-1px;border-top: 0px;
+    }
+    
+    .suggestion-opt:hover{
+        background-color: #f3f3f3;
+        cursor: pointer;
+    }
+    
+</style>
+@section('content')
+<div id="page-wrapper" ng-app="jocom" ng-controller="jocomProduct">
+	<div class="row">
+		<div class="col-lg-12">
+			<h1 class="page-header">Products
+				<span class="pull-right">
+					<a class="btn btn-default" data-toggle="tooltip" href="{{ url('product') }}"><i class="fa fa-reply"></i></a>
+				</span>
+			</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="panel panel-default">
+				<div class="panel-heading">
+					<h3 class="panel-title"><i class="fa fa-pencil"></i> Edit Product</h3>
+				</div>
+				<div class="panel-body">
+					{{ Form::open(['url' => ['product/update', $product->id], 'method'=> 'PUT', 'id' => 'update', 'class' => 'form-horizontal', 'files' => true]) }}
+					    <div class="form-group">
+							{{ Form::label('created_by', 'Created By', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<p class="form-control-static">{{$product->insert_by}}</p>
+							</div>
+						</div>
+						<div class="form-group">
+							{{ Form::label('created_at', 'Created At', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<p class="form-control-static">{{$product->insert_date}}</p>
+							</div>
+						</div>
+						<div class="form-group">
+							{{ Form::label('id_number', 'ID Number', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<p class="form-control-static">{{$product->id}}</p>
+							</div>
+						</div>
+						<hr>
+						<div class="form-group">
+							{{ Form::label('sku_number', 'SKU Number', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-2">
+								<p class="form-control-static">{{$product->sku}}</p>
+							</div>
+							<div class="col-lg-1">
+                                     <a class="btn btn-primary left" id="add-duplicate-btn" ><i class="fa fa-plus"></i> Make a Duplicate SKU</a>
+                            </div>
+						</div>
+                                                <hr>
+                                                <div class="form-group">
+							{{ Form::label('base_product', 'Stock Product', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+							                            <?php
+                                                            if ($product->is_base_product  == 1 || in_array(Session::get('username'), array("maruthu","quenny","jye","joshua","agnes","asif","winnie","jessica"))) {
+                                                        ?>
+                                                            <input type="checkbox" name="is_base_product" id="is_base_product" value="1" <?php echo $product->is_base_product == 1 ? 'checked disabled':''; ?>>
+							                             <? } ?>   
+							</div>
+						</div>
+                                                <hr>
+                                                <div class="form-group">
+                                                    <div class="col-lg-2" style="font-weight: bold;margin-left: 21px;">Restriction Module</div>
+                                                	<div class="col-lg-3" style="font-weight: bold;margin-left: -40px;">
+									<label class="radio-inline" style="font-weight: bold;font-weight: bold;"><input type="checkbox" name="is_jpoint" value="1" <?php if($product->is_jpoint == 1) echo "checked"; ?>> JPoints </label>
+				                      <br>
+								<label class="radio-inline" style="font-weight: bold;"> <input type="checkbox" name="is_voucher_code" value="1" <?php if($product->is_voucher_code == 1) echo "checked"; ?> > Voucher Code</label>
+					<br>
+								<label class="radio-inline" style="font-weight: bold;"><input type="checkbox" name="is_bank_card_promo" value="1" <?php if($product->is_bank_card_promo == 1) echo "checked"; ?> > Bank Card Promotions</label>
+							
+					</div>
+
+						</div>
+						<hr>
+                                                
+                                                <div class="form-group">
+							{{ Form::label('product_region', 'Region', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<select class="form-control" id="region_country_id" name="region_country_id">
+                                                                <?php foreach ($countries as $key => $value) { ?>
+                                                                    <option value="<?php echo $value->id; ?>" <?php if($product->region_country_id == $value->id){ echo "selected";} ?>><?php echo $value->name;?></option>
+                                                                <?php } ?>
+                                                            </select>
+                                                            <select class="form-control" id="region_id" name="region_id" style="margin-top: 10px;">
+                                                                
+                                                                <?php if(Session::get('branch_access') != 1){?>
+                                                                <option value="0">All region</option>
+                                                                <?php } ?>
+                                                                <?php foreach ($regions as $key => $value)  { ?>
+                                                                    <option value="<?php echo $value->id; ?>" <?php if($value->id == $product->region_id) { echo "selected";} ?>><?php echo $value->region; ?></option>
+                                                                <?php  } ?>
+                                                            </select>
+							</div>
+                                                        <div class="col-lg-3">
+								
+							</div>
+						</div>
+<!--						<hr>
+						<div class="form-group @if ($errors->has('seller_name')) has-error @endif">
+							{{ Form::label('seller_name', 'Seller Name', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::select('seller_name', ['' => 'Select Seller Name'] + $sellersOptions, $product->sell_id, ['class' => 'form-control']) }}
+								{{ $errors->first('seller_name', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>-->
+						<hr>
+                           <div class="form-group @if ($errors->has('seller_name')) has-error @endif">
+							{{ Form::label('seller_name', 'Seller Name', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+                                                            <select class="form-control" id="seller_name2" name="seller_name2">
+                                                                <option value="">Select Seller Name</option>
+                                                                <?php foreach ($sellersOptions as $key => $value) { ?>
+                                                                    <option value="<?php echo $key;?>"><?php echo $value;?></option>
+                                                                <?php } ?>
+                                                            </select>
+							</div>
+                                                        <div class="col-lg-1">
+                                                            <a class="btn btn-primary" id="add-seller-btn" ><i class="fa fa-plus"></i> Add Seller</a>
+                                                        </div>
+                                                        <div class="col-lg-5 col-lg-offset-2">
+                                                            <table class="table table-striped table-bordered" style="margin-top: 10px;"> 
+                                                                <thead> 
+                                                                    <tr> 
+                                                                        <th class="col-md-8">Seller Name</th> 
+                                                                        <th class="col-md-3">State</th> 
+                                                                        <th class="col-md-2"></th> 
+                                                                    </tr> </thead> 
+                                                                <tbody id="multipleSellerTable"> 
+                                                                    <?php foreach ($sellersMultiple as $key => $value) { ?>
+                                                                    <tr> 
+                                                                        <td><?php echo $value->company_name; ?>
+                                                                            <input name="seller_multiple[]" value="<?php echo $value->seller_id; ?>" type="hidden">
+                                                                        </td> 
+                                                                        <td><?php echo $value->StateName; ?></td> 
+                                                                        <td><a seller-id="<?php echo $value->seller_id; ?>" class="btn btn-danger btn-xs remove-seller"><i class="fa fa-trash-o"></i> Remove</a></td> 
+                                                                    </tr> 
+                                                                    <?php }?>
+                                                                </tbody> 
+                                                            </table>
+                                                        </div>
+						</div>
+						<hr>
+						<div class="form-group @if ($errors->has('seller_name')) has-error @endif">
+							{{ Form::label('GS Vendor Name', 'GS Vendor Name', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+
+                       <?php  //print_r($vendorOptions); ?>
+                                                            <select class="form-control" id="gs_vendor_name" name="gs_vendor_name">
+                                                                <option value="">Select GS Vendor</option>
+                                                                <?php foreach ($vendorOptions as $key => $value) { ?>
+                                                                    <option value="<?php echo $key;?>"><?php echo $value;?></option>
+                                                                <?php } ?>
+                                                            </select>
+							</div>
+                                                        <div class="col-lg-1">
+                                                            <a class="btn btn-primary" id="add-gs-vendor-btn" ><i class="fa fa-plus"></i> Add GS Vendor</a>
+                                                        </div>
+                                                        <div class="col-lg-5 col-lg-offset-2">
+                                                            <table class="table table-striped table-bordered" style="margin-top: 10px;"> 
+                                                            <thead> 
+                                                                <tr> 
+                                                                    <th class="col-md-8">GS Vendor</th> 
+                                                                    <th class="col-md-2"></th> 
+                                                                </tr> 
+                                                            </thead> 
+                                                            <tbody id="multipleVendorTable"> 
+                                                                <?php foreach ($vendorGS as $key => $value) { ?>
+                                                                <tr> 
+                                                                    <td><?php echo $value; ?>
+                                                                        <input name="vendor_multiple[]" value="<?php echo $key; ?>" type="hidden">
+                                                                    </td> 
+                                                                    <td><a seller-id="<?php echo $key; ?>" class="btn btn-danger btn-xs gs-remove-seller"><i class="fa fa-trash-o"></i> Remove</a></td> 
+                                                                </tr> 
+                                                                <?php }?>
+                                                            </tbody> 
+                                                            </table>
+                                                        </div>
+						</div>
+						<hr>
+						<div class="form-group @if ($errors->has('product_name')) has-error @endif">
+							{{ Form::label('product_name', 'Product Name *', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::text('product_name', $product->name, ['class' => 'form-control']) }}
+								{{ $errors->first('product_name', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('product_name')) has-error @endif">
+							{{ Form::label('product_shortname', 'Product Short Name *', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::text('product_shortname', $product->shortname, ['class' => 'form-control']) }}
+								{{ $errors->first('product_shortname', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('product_name_cn')) has-error @endif">
+							{{ Form::label('product_name_cn', 'Product Name (Chinese)', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::text('product_name_cn', $product->name_cn, ['class' => 'form-control']) }}
+								{{ $errors->first('product_name_cn', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('product_name_my')) has-error @endif">
+							{{ Form::label('product_name_my', 'Product Name (Bahasa)', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::text('product_name_my', $product->name_my, ['class' => 'form-control']) }}
+								{{ $errors->first('product_name_my', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+						<div class="form-group @if ($errors->has('product_desc')) has-error @endif">
+							{{ Form::label('product_desc', 'Description', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-10">
+								{{ Form::textarea('product_desc', $product->description, ['class' => 'form-control']) }}
+								{{ $errors->first('product_desc', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('product_desc_cn')) has-error @endif">
+							{{ Form::label('product_desc_cn', 'Description (Chinese)', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-10">
+								{{ Form::textarea('product_desc_cn', $product->description_cn, ['class' => 'form-control']) }}
+								{{ $errors->first('product_desc_cn', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('product_desc_my')) has-error @endif">
+							{{ Form::label('product_desc_my', 'Description (Bahasa)', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-10">
+								{{ Form::textarea('product_desc_my', $product->description_my, ['class' => 'form-control']) }}
+								{{ $errors->first('product_desc_my', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+						<div <?php if($isFixedOption){ echo 'style="display:none;"'; } ?> class="form-group @if ($errors->has('main_category')) has-error @endif">
+							{{ Form::label('main_category', 'Primary Category', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-4">
+								<ul id="main_category" class="form-control categories-container">
+									@foreach ($categoriesOptions as $category)
+									@if ( $category['status']  == 1 )
+										<li id="main_{{ $category['id'] }}" class="@if($mainCategory->category_id == $category['id']) hide @endif @if($category['status'] == 0) inactive @endif">
+										@if ( ! empty($category['category_name']))
+											{{ $category['category_name'] }} @if ($category['permission']) **[Private] @endif [ID: {{ $category['id'] }}]
+										@endif
+										</li>
+									@endif
+									@endforeach
+								</ul>
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('categories')) has-error @endif">
+					        <?php if($isFixedOption){ ?>
+                                {{ Form::label('', '', ['class' => 'col-lg-2 control-label ']) }}
+                                <div class="col-lg-4" style="display:none;">
+								<label class="label-category">Available Category</label>
+								<ul id="available_category" class="form-control categories-container">
+									@foreach ($categoriesOptions as $category)
+										@if ( ! empty($selectedCategoriesArray) && in_array($category['id'], $selectedCategoriesArray))
+											<li id="available_{{ $category['id'] }}" class="hide @if($category['status'] == 0) inactive @endif">
+										@else
+											<li id="available_{{ $category['id'] }}" @if($category['status'] == 0) class="inactive" @endif>
+										@endif
+										@if ( ! empty($category['category_name']))
+											{{ $category['category_name'] }} @if ($category['permission']) **[Private] @endif [ID: {{ $category['id'] }}]
+										@endif
+										</li>
+									@endforeach
+								</ul>
+							</div>
+                            <?php } else{ ?>
+							{{ Form::label('categories', 'Secondary Category', ['class' => 'col-lg-2 control-label']) }}
+							<div class="col-lg-4">
+								<label class="label-category">Available Category</label>
+								<ul id="available_category" class="form-control categories-container">
+									@foreach ($categoriesOptions as $category)
+										@if ( ! empty($selectedCategoriesArray) && in_array($category['id'], $selectedCategoriesArray))
+											<li id="available_{{ $category['id'] }}" class="hide @if($category['status'] == 0) inactive @endif">
+										@else
+											<li id="available_{{ $category['id'] }}" @if($category['status'] == 0) class="inactive" @endif>
+										@endif
+										@if ( ! empty($category['category_name']))
+											{{ $category['category_name'] }} @if ($category['permission']) **[Private] @endif [ID: {{ $category['id'] }}]
+										@endif
+										</li>
+									@endforeach
+								</ul>
+							</div>
+							<div class="col-lg-1 img-switch"></div>
+							 <?php } ?>
+							<div class="col-lg-4">
+								<label class="label-category">Selected Category</label>
+								<ul id="selected_category" class="form-control categories-container">
+									@foreach ($categoriesOptions as $category)
+										@if ( ! empty($selectedCategoriesArray) && in_array($category['id'], $selectedCategoriesArray))
+											<li id="selected_{{ $category['id'] }}" class="@if($mainCategory->category_id == $category['id']) main @endif @if($category['status'] == 0) inactive @endif">
+										@else
+											<li id="selected_{{ $category['id'] }}" class="hide @if($category['status'] == 0) inactive @endif">
+										@endif
+										@if ( ! empty($category['category_name']))
+											{{ $category['category_name'] }} @if ($category['permission']) **[Private] @endif [ID: {{ $category['id'] }}]
+										@endif
+										</li>
+									@endforeach
+								</ul>
+								<div id="categories">
+									@if (Session::has('_old_input') && ! empty(Input::old('categories')))
+										<input id="old-main-category" type="hidden" value="{{ Input::old('main_category') }}">
+										@foreach (Input::old('categories') as $category)
+											<input class="old-categories" type="hidden" value="{{ $category }}">
+										@endforeach
+									@endif
+									{{-- Hidden inputs will be generated on submit by JavaScript --}}
+								</div>
+							</div>
+							<div class="col-lg-10 col-lg-offset-2">
+								{{ $errors->first('categories', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+						<?php
+							$count		= 0;
+							$has_error	= false;
+
+							for ($i = 0; $i < Session::get('errorsPriceOptions'); $i++)
+							{
+								$priceArray = [
+									'label',
+									'price',
+									'qty',
+									'p_referral_fees',
+									'p_referral_fees_type',
+									'default',
+								];
+
+								foreach ($priceArray as $price) {
+									if ($errors->has("price.{$count}.{$price}")) {
+										$has_error  = true;
+									}
+								}
+
+								$count++;
+							}
+						?>
+						<div class="form-group @if ($has_error == true) has-error @endif">
+							
+							<div class="col-lg-12">
+							    <?php if (!$isFixedOption) { ?>
+                                    <button type="button" ng-click="AddOptionPrice()" id="add_price_option" class="btn btn-primary"><i class="fa fa-plus"></i> Add Price Option</button>
+                                <?php }?>
+								@if ($has_error == true) <p class="help-block">Label, Price, Quantity, Referral Fees and Default price label are required.</p> @endif
+								<div class="clearfix"><br></div>
+                                                                <div class="table-responsive" >
+									<table class="table table-bordered" style="font-size:14px;">
+										<thead>
+										    <tr>
+                                                <th colspan="7"><input type="checkbox" style="" name="enable_foreign_market" id="enable_foreign_market" value="1" <?php if($product->is_foreign_market == 1) echo "checked"; ?>> Foreign Market</th>
+                                            </tr>
+											<tr>
+												<th>No.</th>
+												<th>Label ID</th>
+												<th>Label</th>
+												<th>Price</th>
+												<th>Other Details</th>
+												<th>Default</th>
+												<th>Action</th>
+											</tr>
+										</thead>
+										<tbody id="prices">
+											@foreach ($productPrices as $index => $price)
+												<tr class="price_option">
+													<td class="col-xs-1">
+														{{ $index + 1 }}
+													</td>
+													<td class="col-xs-1">{{ $price->id }}</td>
+													<td class="col-xs-3">
+															<div class="form-group">
+															{{ Form::label('enPriceLabel', 'EN:', ['class'=> 'col-sm-2 help-block']) }}
+															<div class="col-sm-10">
+															
+
+																{{ Form::textarea('price[][label]', $price->label, ['class' => 'form-control',id =>'enPriceLabel',placeholder =>'English']) }}
+								                          {{ $errors->first('price_labe', '<p class="help-block">:message</p>') }}
+															</div>
+														<p class="text-danger">*Please enter <b>"Label Comma Separated "</b>.</p>
+
+														</div>
+															<div class="form-group">
+															{{ Form::label('cnPriceLabel', 'CN:', ['class'=> 'col-sm-2 help-block']) }}
+															<div class="col-sm-10">
+															
+
+																{{ Form::textarea('price[][label_cn]', $price->label_cn, ['class' => 'form-control',id =>'cnPriceLabel',placeholder =>'Chinese']) }}
+								                          {{ $errors->first('price_labe', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+														<div class="form-group">
+															{{ Form::label('myPriceLabel', 'MY:', ['class'=> 'col-sm-2 help-block']) }}
+															<div class="col-sm-10">
+															
+																		{{ Form::textarea('price[][label_my]', $price->label_my, ['class' => 'form-control',id =>'cnPriceLabel',placeholder =>'Bahasa']) }}
+								                          {{ $errors->first('price_labe', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+														<div class="form-group">
+															{{ Form::label('alternativePriceLabel', 'WH:', ['class'=> 'col-sm-2 help-block']) }}
+															<div class="col-sm-10">
+															
+																		{{ Form::textarea('price[][alternative_label_name]', $price->alternative_label_name, ['class' => 'form-control',id =>'myPriceLabel',placeholder =>'Warehouse Label']) }}
+								                          {{ $errors->first('price_labe', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+                                                                                                                <!--<div class="col-md-12 " style="text-align: center; border-top: solid 1px #ececec;border-bottom: solid 1px #ececec;padding: 10px;margin-bottom: 5px;background-color: #d9534f; color: #ffffff;">Base Product <a href="#" class="btn btn-default btn-xs" style="float:right;"><i class="fa fa-plus-circle"></i></a></div>-->
+                                                                                                                
+													</td>
+													<td class="col-xs-3">
+                                                                                                               
+														<div id="main-price-box" class="local_price" style="<?php if($product->is_foreign_market == 1) echo "display:none;"; ?>">
+                                                            <h4 class="ui horizontal divider header"><i class="tag icon"></i> Malaysia Price </h4>   
+    														<div class="form-group">
+    															{{ Form::label('price', 'Actual:', ['class'=> 'col-sm-4 help-block']) }}
+    															<div class="col-sm-8">
+    																<input id="price_{{ $index + 1 }}" type="text" class="form-control text-right price_1 actual_price" name="price[][price]" placeholder="Actual Price" value="{{ $price->price }}">
+                                                                                                                                    <p><div >Final Price : <span ><?php echo $productFinalPrice['actual_price'][$price->id]; ?></span></div>
+    																{{ $errors->first('price', '<p class="help-block">:message</p>') }}
+    															</div>
+    														</div>
+    														<div class="form-group">
+    															{{ Form::label('price_promo', 'Promotion:', ['class'=> 'col-sm-4 help-block']) }}
+    															<div class="col-sm-8">
+    																<input id="price_promo_{{ $index + 1 }}" type="text" class="form-control text-right price_1 promo_price" name="price[][price_promo]" placeholder="Promotion" value="{{ $price->price_promo }}">
+    																<p><div >Final Price : <span ><?php echo $productFinalPrice['promo_price'][$price->id]; ?></span></div>
+    																{{ $errors->first('price_promo', '<p class="help-block">:message</p>') }}
+    															</div>
+    														</div>
+                                                        </div>
+                                                        <div class="foreign_price" style="<?php if($product->is_foreign_market != 1) echo "display:none;"; ?>">
+                                                            <h4 class="ui horizontal divider header">Foreign Price (USD)</h4>
+
+                                                            <div class="form-group">
+                                                                    {{ Form::label('price', 'Actual:', ['class'=> 'col-sm-4 help-block']) }}
+                                                                    <div class="col-sm-8">
+                                                                        <div class="input-group">
+                                                                            <span class="input-group-addon" >USD</span>
+                                                                            <input type="text" class="form-control actual_price_foreign" name="price[][foreign_price]" value="<?php echo $price->foreign_price; ?>" id="actual_price_foreign_{{ $index + 1 }}" target="{{ $index + 1 }}" target_oid="{{ $price->id }}" target_pid="{{ $product->id }}">
+                                                                        </div>
+                                                                    </div>
+                                                            </div>
+                                                            <div class="form-group">
+                                                                    {{ Form::label('price_promo', 'Promotion:', ['class'=> 'col-sm-4 help-block']) }}
+                                                                    <div class="col-sm-8">
+                                                                        <div class="input-group">
+                                                                            <span class="input-group-addon">USD</span>
+                                                                            <input type="text" class="form-control promo_price_foreign" name="price[][foreign_price_promo]" value="<?php echo $price->foreign_price_promo; ?>" id="promo_price_foreign_{{ $index + 1 }}" target="{{ $index + 1 }}" target_oid="{{ $price->id }}" target_pid="{{ $product->id }}">
+                                                                        </div>
+                                                                    </div>
+                                                            </div>
+                                                            <div style="position: relative;padding: 10px;background-color: #f9f9f9;border-radius: 5px;  border: solid 1px #d2d2d2;">
+                                                                <div class="ref_box" id="ref_box_{{ $index + 1 }}">
+                                                                    <?php  
+                                                                    if($product->is_foreign_market == 1){
+                                                                    foreach ($productPriceExhangeRate['exchange_rate'][$price->id]['rate'] as $keyER => $valueER) { ?>
+                                                                    <div class="row">
+                                                                        <div class="col-md-12">
+                                                                            <h4 class="ui horizontal divider header"> <?php echo $valueER['Country']; ?> (1 <?php echo $valueER['currency_code_from']; ?> = <?php echo $valueER['exchange_rate_to']; ?> <?php echo $valueER['currency_code_to']; ?>)</h4>
+                                                                            <span>Actual : <?php echo $valueER['price']; ?></span>
+                                                                            <br><span>Promotion :  <?php echo $valueER['price_promo']; ?></span>
+                                                                        </div>
+                                                                    </div>
+                                                                    <?php }} ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <?php  
+if (in_array(Session::get('username'), array("tracyyap","william","asif","joshua","agnes","maruthu","jye","quenny"))) {
+    $display = "";   
+}else{
+    $display = "display:none;";   
+}?>
+                                                                                                               
+<div class="col-md-12 " style="margin-top:10px; text-align: center; border-top: solid 1px #ececec;border-bottom: solid 1px #ececec;padding: 10px;margin-bottom: 5px;background-color: #d9534f;
+    color: #ffffff; <?php echo  $display; ?>">Cost Price</div>
+    <div class="list-seller-cost" style="<?php echo  $display; ?>">
+        <?php foreach ($productSellerCost['product_price_seller'][$price->id] as $keyS => $valueS) { //echo "<pre>"; print_r($valueS); echo "</pre>";?>
+            <div class='form-group seller-cost-<?php echo $valueS->seller_id; ?>' > 
+                <div class='col-sm-12'><i class='fa fa-caret-right help-block'></i> <?php echo $valueS->company_name; ?> </div> 
+                <label for='cost_price' class='col-sm-4 help-block'>Cost</label> 
+                <div class='col-sm-8'><input id='price-cost' type='text' class='form-control text-right' name='price[][cost_price][<?php echo $valueS->seller_id; ?>]' placeholder='Actual Price' value='<?php echo $valueS->cost_price; ?>'></div> 
+            </div>
+        <?php } ?>
+    </div>
+<!--                                                                                                                <div class="form-group">
+                                                                                                                    <div class="col-sm-12"><i class="fa fa-caret-right help-block"></i> Jocom eThirtySeven Sdn. Bhd.</div>
+                                                                                                                    {{ Form::label('cost_price', 'Cost', ['class'=> 'col-sm-4 help-block']) }}
+                                                                                                                    <div class="col-sm-8">
+                                                                                                                            <input id="price" type="text" class="form-control text-right" name="price[][cost_price]" placeholder="Actual Price" value="{{ $price->price }}">
+                                                                                                                            {{ $errors->first('price', '<p class="help-block">:message</p>') }}
+                                                                                                                    </div>
+														</div>
+                                                                                                                <div class="form-group">
+                                                                                                                    <div class="col-sm-12"><i class="fa fa-caret-right help-block"></i> Ben Mart Trading Sdn Bhd</div>
+                                                                                                                    {{ Form::label('cost_price', 'Cost', ['class'=> 'col-sm-4 help-block']) }}
+                                                                                                                    <div class="col-sm-8">
+                                                                                                                            <input id="price" type="text" class="form-control text-right" name="price[][cost_price]" placeholder="Actual Price" value="{{ $price->price }}">
+                                                                                                                            {{ $errors->first('price', '<p class="help-block">:message</p>') }}
+                                                                                                                    </div>
+														</div>-->
+                                                                                                               
+													</td>
+													<td class="col-xs-3">
+														<div class="form-group">
+															{{ Form::label('seller_sku', 'Seller SKU:', ['class'=> 'col-sm-5 help-block']) }}
+															<div class="col-sm-7">
+																<input id="seller_sku" type="text" class="form-control" name="price[][seller_sku]" placeholder="Seller SKU" value="{{ $price->seller_sku }}">
+																{{ $errors->first('seller_sku', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+                                                                                                                <div class="form-group">
+															{{ Form::label('barcode', 'Barcode:', ['class'=> 'col-sm-5 help-block']) }}
+															<div class="col-sm-7">
+																<input id="barcode" type="text" class="form-control" name="price[][barcode]" placeholder="Barcode" value="{{ $price->barcode }}">
+																{{ $errors->first('barcode', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+														<div class="form-group">
+															{{ Form::label('qty', 'Quantity:', ['class'=> 'col-sm-5 help-block']) }}
+															<div class="col-sm-7">
+																<input id="qty" type="text" class="form-control" name="price[][qty]" placeholder="Quantity" value="{{ $price->qty }}">
+																{{ $errors->first('qty', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+														<div class="form-group">
+															{{ Form::label('stock', 'Actual Stock:', ['class'=> 'col-sm-5 help-block']) }}
+															<div class="col-sm-7">
+																<input id="stock" type="text" class="form-control" name="price[][stock]" placeholder="Actual Stock" value="{{ $price->stock }}">
+																{{ $errors->first('stock', '<p class="help-block">:message</p>') }}
+															</div>
+														</div>
+                                                        <div class="form-group">
+                                                            {{ Form::label('stock_unit', 'Stock Unit:', ['class'=> 'col-sm-5 help-block']) }}
+                                                            <div class="col-sm-7">
+                                                                <input id="stock_unit" type="text" class="form-control" name="price[][stock_unit]" placeholder="Unit Measurement" value="{{ $price->stock_unit }}">
+                                                                {{ $errors->first('stock_unit', '<p class="help-block">:message</p>') }}
+                                                            </div>
+                                                        </div>
+														<div class="form-group">
+															{{ Form::label('p_referral_fees', 'Referral Fees:', ['class'=> 'col-sm-5 help-block']) }}
+															<div class="col-sm-7">
+																<input id="p_referral_fees" type="text" class="form-control" name="price[][p_referral_fees]" placeholder="Referral Fees" value="{{ $price->p_referral_fees }}">
+																{{ $errors->first('p_referral_fees', '<p class="help-block">:message</p>') }}
+															</div>
+															<div class="col-sm-7" style="margin-top: 15px;">
+																<select name="price[][p_referral_fees_type]" id="price[][p_referral_fees_type]" class="form-control">
+																	<option @if ($price->p_referral_fees_type == '%') selected @endif value="%">%</option>
+																	<option @if ($price->p_referral_fees_type == 'N') selected @endif value="N">Nett</option>
+																</select>
+															</div>
+														</div>
+														<div class="form-group">
+                                                            {{ Form::label('p_weight', 'Product Weight (gram):', ['class'=> 'col-sm-5 help-block']) }}
+                                                            <div class="col-sm-7">
+                                                                <input id="p_weight" type="text" class="form-control" name="price[][p_weight]" placeholder="(gram)" value="{{ $price->p_weight }}">
+                                                                {{ $errors->first('p_weight', '<p class="help-block">:message</p>') }}
+                                                            </div>
+                                                        </div>                                                   <?php if(!$isFixedOption) {?>
+                                                                                                                <h4 class="ui horizontal divider header base-box" >
+                                                                                                                    <i class="tag icon"></i>
+                                                                                                                    Base Product
+                                                                                                                </h4>
+                                                                                                                <div class="row base-box" style="position:relative;padding-left: 15px;padding-right: 15px;">
+                                                                                                                    <div class="input-group">
+                                                                                                                        <input type="text" class="form-control input-search-base"  id="search-base-{{ $index + 1 }}" ng-keyup="PFindProduct('search-base-{{ $index + 1 }}','suggestion-opt-box-{{ $index + 1 }}','{{ $index + 1 }}')" placeholder="search base product..">
+                                                                                                                        <span class="input-group-addon">x</span>
+                                                                                                                      </div>
+                                                                                                                    <div class="row suggestion-opt-box" id="suggestion-opt-box-{{ $index + 1 }}" style="">
+    <!--                                                                                                                    <div ng-repeat="x in suggestion_opt" class="col-md-12 suggestion-opt" >
+                                                                                                                            <div style="float:right;"><a class="btn btn-default" ng-click="AddProductBase(x.sku)"><i class="fa fa-plus"></i></a></div>
+                                                                                                                            <b>[[x.sku]]</b>
+                                                                                                                            <br>[[x.name]] 
+                                                                                                                        </div>-->
+                                                                                                                    </div>
+
+                                                                                                                    <hr>
+                                                                                                                    <div class="form-group attach-base" id="attach-base-{{ $index + 1 }}">
+
+                                                                                                                    <?php 
+                                                                                                                    if(isset($optionBaseProduct[$price->id])){
+                                                                                                                    foreach ($optionBaseProduct[$price->id] as $key => $value) { ?>
+                                                                                                                    <div class="col-md-12 sel-product-base"><div class="input-group"><span class="input-group-addon" id="basic-addon1" style="text-align:left;">
+                                                                                                                            <b><?php echo $value['sku'];?></b>
+                                                                                                                            <div><?php echo $value['name'];?></div></span>
+                                                                                                                            <span class="input-group-addon" id="basic-addon1" style="width: 10px;"> 
+                                                                                                                            <input class="form-control" style="width: 50px;min-width:50px;float: right;" name="productbase[option-{{ $index + 1 }}][sku][<?php echo $value['sku'];?>]" type="text" value="<?php echo $value['qty'];?>"></span>
+                                                                                                                            <span class="input-group-addon remove-product" id="basic-addon1" style="background-color:#d9ddea;cursor: pointer;"><i class="fa fa-trash-o"></i></span> 
+                                                                                                                            </div>
+                                                                                                                    </div>
+                                                                                                                    <?php }} ?>   
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                                 <?php } ?>
+													</td>
+													<input type="hidden" name="price[][id]" value="{{ $price->id }}">
+													<td class="col-xs-1">
+														<input type="radio" name="price[][default]" value="{{ $index + 1 }}" @if ($price->default == 1) checked @endif>
+													</td>
+													<td class="col-xs-1">
+														<button type="button" id="delete_price_option" class="btn btn-xs btn-danger"><i class="fa fa-trash-o"></i> Remove</button>
+													</td>
+												</tr>
+                                                                                               
+											@endforeach
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</div>
+						<hr>
+
+						<div class="form-group linksproductheaderbase @if ($errors->has('product_link_base')) has-error @endif">
+							{{ Form::label('product_link_base', 'Base Product Links Up', ['class' => 'col-lg-2 control-label']) }}
+							
+                                <div class="col-lg-1">
+
+                                    <a class="btn btn-primary" id="add-lnkproductbase-btn"  href="/warehouse/ajaxbaseproduct/{{$product->id}}" ><i class="fa fa-plus"></i> Link Variant / Related Base Products</a>
+                                </div>
+                                                        
+						</div>
+						<div class="form-group linksbaseproductdetails">
+								<div class="col-lg-10 col-lg-offset-2">
+                                        <table class="table table-striped table-bordered" style="margin-top: 10px;"> 
+                                            <thead> 
+                                                <tr> 
+                                                    <th class="col-md-1">Product ID </th> 
+                                                    <th class="col-md-3">Product Name</th> 
+                                                   <th class="col-md-2">Action</th> 
+                                                </tr> 
+                                             </thead> 
+                                            <input id="base_status_st" name="base_status_st" value="1" type="hidden">
+                                            <tbody id="multipleBaseProductsTable"> 
+                                                <?php foreach ($baseProducts as $key => $value) { ?>
+                                                <tr> 
+                                                    <td><?php echo $value->ProductID; ?>
+                                                        <input id="base_productID[]" name="base_productID[]" value="<?php echo $value->ProductID; ?>" type="hidden">
+                                                    </td> 
+                                                    <td>
+                                                    	<?php echo $value->ProductName; ?>
+                                                    	<input id="base_status" name="base_status" value="{{$value->Status}}" type="hidden">
+                                                    	<input id="base_refno[]" name="base_refno[]" value="{{$value->Status}}" type="hidden">
+                                                    </td>
+                                                   <!--  <td>
+                                                    	{{$value->NodePosition}}
+                                                        <input name="node_NodeLevel[]" value="{{$value->NodePosition}}" type="hidden">
+                                                    </td> -->
+                                                    <td><a node-id="<?php echo $value->ProductID; ?>" class="btn btn-danger btn-xs remove-node disabled <?php if($value->Default == 1){echo 'disabled';}?>"><i class="fa fa-trash-o"></i> Remove</a></td> 
+                                                </tr> 
+                                                <?php }?>
+                                                <?php if(!isset($baseProducts)){?>
+		                                        <tr id="emptyproduct">
+		                                            <td colspan="5" style="text-align:center;">No product added.</td>
+		                                        </tr>
+		                                        <?php } ?>
+                                            </tbody> 
+                                        </table>
+                                    </div>
+						</div>
+						<hr>
+
+						<div class="form-group linksproductheader @if ($errors->has('product_link')) has-error @endif">
+							{{ Form::label('product_link', 'Product Links Up', ['class' => 'col-lg-2 control-label']) }}
+							
+                                <div class="col-lg-1">
+
+                                    <a class="btn btn-primary" id="add-lnkproduct-btn"  href="/warehouse/ajaxproduct/{{$product->id}}" ><i class="fa fa-plus"></i> Link Basic Products</a>
+                                </div>
+                                                        
+						</div>
+						<div class="form-group linksproductdetails">
+								<div class="col-lg-10 col-lg-offset-2">
+                                        <table class="table table-striped table-bordered" style="margin-top: 10px;"> 
+                                            <thead> 
+                                                <tr> 
+                                                    <th class="col-md-1">Product ID </th> 
+                                                    <th class="col-md-3">Product Name</th> 
+                                                    <th class="col-md-2">Variant / Related ID</th> 
+                                                    <th class="col-md-2">Quantity</th> 
+                                                    <th class="col-md-2">Action</th> 
+                                                </tr> 
+                                             </thead> 
+                                            <input id="node_status_st" name="node_status_st" value="1" type="hidden">
+                                            <tbody id="multipleNodeProductsTable"> 
+                                                <?php foreach ($nodeProducts as $key => $value) { ?>
+                                                <tr> 
+                                                    <td><?php echo $value->ProductID; ?>
+                                                        <input id="parent_productID[]" name="parent_productID[]" value="<?php echo $value->ProductID; ?>" type="hidden">
+                                                    </td> 
+                                                    <td>
+                                                    	<?php echo $value->ProductName; ?>
+                                                    	<input id="node_status" name="node_status" value="{{$value->Status}}" type="hidden">
+                                                    </td>
+                                                    <td>
+                                                    	{{$value->ParentProductId}}
+                                                        <input id="node_NodeLevel[]" name="node_NodeLevel[]" value="{{$value->NodePosition}}" type="hidden">
+                                                        <input id="node_variantproductID[]" name="node_variantproductID[]" value="{{$value->ParentProductId}}" type="hidden">
+                                                        <input id="node_ref_no[]" name="node_ref_no[]" value="{{$value->Refno}}" type="hidden">
+                                                    </td> 
+                                                    <td><input type="text" class="form-control" name="node_quantity[]" id="node_quantity[]" placeholder="0" value="<?php echo $value->Quantity; ?>" ></input></td> 
+                                                    <td><a node-id="<?php echo $value->ProductID; ?>" class="btn btn-danger btn-xs remove-node disabled"><i class="fa fa-trash-o"></i> Remove</a></td> 
+                                                </tr> 
+                                                <?php }?>
+                                                <?php if(!isset($nodeProducts)){?>
+		                                        <tr id="emptyproduct">
+		                                            <td colspan="5" style="text-align:center;">No product added.</td>
+		                                        </tr>
+		                                        <?php } ?>
+                                            </tbody> 
+                                        </table>
+                                    </div>
+						</div>
+
+						<hr>
+						<div class="form-group @if ($errors->has('gst')) has-error @endif">
+							{{ Form::label('gst', 'GST Status', ['class'=> 'col-lg-2 control-label']) }}
+							<div class="col-lg-10">
+						        <?php if (!$isFixedOption) { ?>
+								<label class="radio-inline">
+									<input type="radio" value="2" name="gst" @if ($product->gst == 2) checked @endif> Taxable
+								</label>
+								<?php } ?>
+								<label class="radio-inline">
+									<input type="radio" value="1" name="gst" @if ($product->gst == 1) checked @endif> Zero Rated
+								</label>
+							    <?php if (!$isFixedOption) { ?>
+								<label class="radio-inline">
+									<input type="radio" value="0" name="gst" @if ($product->gst == 0) checked @endif> Exempted
+								</label>
+								<?php } ?>
+							</div>
+						</div>
+						<div class="form-group">
+							{{ Form::label('gst_value', 'GST Value', ['class'=> 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<p class="form-control-static">{{$product->gst_value}} %</p>
+								<input type="hidden" name="gst_value" value="{{$product->gst_value}}">
+							</div>
+						</div>
+						<hr>
+						<div class="form-group">
+							{{ Form::label('qr_code', 'QR Code', ['class'=> 'col-lg-2 control-label']) }}
+							<div class="col-lg-10">
+								@if ($product->qrcode_file)
+									{{ HTML::image('images/qrcode/'.$product->qrcode_file)}}
+									<h4><span class="label label-danger">{{ $product->qrcode }}</span></h4>
+								@else
+									{{ HTML::image('images/qrcode/noqrcode.png')}}
+								@endif
+							</div>
+						</div>
+						<hr>
+						<div class="form-group @if ($errors->has('delivery_time')) has-error @endif">
+							{{ Form::label('delivery_time', 'Delivery Time', ['class'=> 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								{{ Form::select('delivery_time', [
+									''					=> 'Select Delivery Time',
+									'24 hours'			=> '24 hours',
+									'1-2 business days'	=> '1-2 business days',
+									'2-3 business days'	=> '2-3 business days',
+									'3-7 business days'	=> '3-7 business days',
+									'14 business days'	=> '14 business days',
+									'15-21 business days' => '15-21 business days',
+								], $product->delivery_time, ['class' => 'form-control']) }}
+								{{ $errors->first('delivery_time', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('zone_id')) has-error @endif">
+							{{ Form::label('delivery_fee', 'Delivery Fee', array('class'=> 'col-lg-2 control-label')) }}
+							<div class="col-lg-2">
+								<select id="delivery_fee" class="form-control">
+									<option value="0">Select Zone</option>
+									@foreach ($zoneOptions as $zone)
+										@if ( ! in_array($zone->id, $deliveryZone))
+											<option value="{{ $zone->id }}">{{ $zone->name }}</option>
+										@endif
+									@endforeach
+								</select>
+								{{ $errors->first('zone_id', '<p class="help-block">The delivery zone is required</p>') }}
+							</div>
+							<div class="col-lg-8">
+								<button type="button" id="add_zone" class="btn btn-primary" disabled><i class="fa fa-plus"></i> Add Zone</button>
+							</div>
+						</div>
+						<div id="zone_div">
+							@foreach ($deliveryFees as $index => $fee)
+								<div id="zone_row_{{ $index }}" class="form-group">
+									<div class="col-lg-10 col-lg-offset-2">
+										<input type="hidden" value="{{ $fee->zone_id }}" name="zone_id[{{ $index }}]">
+										<div class="row">
+											<div class="col-lg-3">
+												<div class="input-group">
+													<span class="input-group-addon">
+														<i class="fa fa-globe fa-fw"></i>
+													</span>
+													<input type="text" name="zone_name[{{ $index }}]" class="form-control" value="{{ $fee->name }}" disabled>
+												</div>
+											</div>
+											<div class="col-lg-2">
+												<div class="input-group">
+													<span class="input-group-addon">{{Config::get("constants.CURRENCY")}}</span>
+													<input type="text" name="zone_price[{{ $index }}]" class="form-control text-right" value="{{ $fee->price }}" placeholder="Delivery Fee">
+												</div>
+											</div>
+											<div class="col-lg-2">
+												<button type="button" class="btn btn-danger delete-zone" data-zone="{{ $index }}"><i class="fa fa-minus"></i> Remove Zone</button>
+											</div>
+										</div>
+									</div>
+								</div>
+								<?php $zoneCounter = $index; ?>
+							@endforeach
+						</div>
+						<hr>
+						<div class="form-group @if ($errors->has('related_product')) has-error @endif">
+						{{ Form::label('related_product', 'Related Products (QR Code)', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-6">
+							{{ Form::text('related_product', $product->related_product, array('placeholder' => 'e.g. JC2110 or JC1000, JC2000, JC3000', 'class' => 'form-control') ) }}
+							{{ $errors->first('related_product', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('tag')) has-error @endif">
+						{{ Form::label('tag', 'Product Tags', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-6">
+							{{ Form::text('tag', $tags, array('placeholder' => 'e.g. food, fresh', 'class' => 'form-control') ) }}
+							{{ $errors->first('tag', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('do_cat')) has-error @endif" style="display: none;">
+						{{ Form::label('do_cat', 'DO Category', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-6">
+							{{ Form::text('do_cat', $product->do_cat, array('placeholder' => 'e.g. MEAT', 'class' => 'form-control') ) }}
+							{{ $errors->first('do_cat', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+						<div class="form-group">
+							{{ Form::label('bulk', 'Bulk', ['class'=> 'col-lg-2 control-label']) }}
+							<div class="col-lg-3">
+								<input type="checkbox" name="bulk" value="1" <?php if($product->bulk == 1) echo "checked"; ?> >
+							</div>
+						</div>
+						<div class="form-group @if ($errors->has('tag')) has-error @endif">
+						{{ Form::label('freshness', 'Product Freshness', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-6">
+							{{ Form::textarea('freshness', $product->freshness, array('placeholder' => 'e.g. Within 24 hours', 'class' => 'form-control', 'maxlength' => '250', 'style' => 'width: 100%; height: 50px;') ) }}				{{ $errors->first('freshness', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group">
+						{{ Form::label('freshness_days', 'Freshness Days', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-1">
+    							<input type="text" class="form-control" name="freshness_days" id="freshness_days" placeholder="0" value="<?php echo $product->freshness_days; ?>" ></input>
+							</div>
+							<?php if($product->freshness_days!=''){ ?>
+								<span class="help-block">e.g. {{$product->freshness_days}} days freshness.</span>
+							<?php } ?>
+						</div>
+						<div class="form-group @if ($errors->has('status')) has-error @endif">
+							{{ Form::label('status', 'Product Status', array('class'=> 'col-lg-2 control-label')) }}
+							<div class="col-lg-3">
+								{{ Form::select('status', ['0' => 'Inactive', '1' => 'Active'], $product->status, ['class'=> 'form-control']) }}
+								{{ $errors->first('status', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+
+						<div class="form-group @if ($errors->has('permission')) has-error @endif">
+							{{ Form::label('weight', 'Product Sorting', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-3">
+								{{ Form::text('weight', $product->weight, array('class'=> 'form-control')) }}
+								{{ $errors->first('weight', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group">
+							{{ Form::label('halal', 'Halal', ['class'=> 'col-lg-2 control-label','style'=>'padding-bottom:25px; padding-top:0px;']) }}
+							<div class="col-lg-3">
+								<input type="checkbox" name="halal" value="1" <?php if($product->halal == 1) echo "checked"; ?> >
+							</div>
+						</div>
+						<hr>
+
+						<div class="form-group">
+							{{ Form::label('min_qty', 'Min Quantity', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-1">
+								<input type="number" name="min_qty" class="form-control" min="0" placeholder="0" value="<?php echo $product->min_qty; ?>">
+								{{ $errors->first('min_qty', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<div class="form-group">
+							{{ Form::label('max_qty', 'Max Quantity', array('class' => 'col-lg-2 control-label')) }}
+							<div class="col-lg-1">
+								<input type="number" name="max_qty" class="form-control" placeholder="0" min="0" value="<?php echo $product->max_qty; ?>">
+								{{ $errors->first('max_qty', '<p class="help-block">:message</p>') }}
+							</div>
+						</div>
+						<hr>
+						
+						<div class="form-group new-arrival-div" style="<?php $categories = explode(",", $product->category);
+						 if (!in_array(751, $categories)) echo "display:none"; ?>">
+                            {{ Form::label('po_date', 'New Arrival Expired At', array('class' => 'col-lg-2 control-label')) }}
+                            <div class="col-lg-2">
+                                <div class="input-group" id="datetimepicker_from">
+                                    <input id="new_arrival_expire" class="form-control" tabindex="1" name="new_arrival_expire" type="text" value="<?php echo $product->new_arrival_expire; ?>">
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-calendar"></span></button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+						<hr>
+
+						<div class="form-group">
+							<div class="col-lg-10 col-lg-offset-2">
+								<input class="btn btn-default" data-toggle="tooltip" type="reset" value="Reset">
+								@if ( Permission::CheckAccessLevel(Session::get('role_id'), 2, 3, 'AND'))
+									<button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> Save</button>
+								@endif
+							</div>
+						</div>
+					{{ Form::close() }}
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+@stop
+
+@section('inputjs')
+{{ HTML::script('js/fileinput.min.js') }}
+<script src="http://cdnjs.cloudflare.com/ajax/libs/summernote/0.5.0/summernote.min.js"></script>
+
+
+<script>
+$(document).ready(function() {
+
+// 	$('#product_desc').summernote({height: 300});
+	$('#enPriceLabel').summernote({height: 100});
+
+
+	});
+
+</script>
+<script>
+
+
+/* 
+ */
+var app = angular.module('jocom', []);
+    
+app.config(['$httpProvider', function($httpProvider) {
+    $httpProvider.defaults.headers.common["X-Requested-With"] = 'XMLHttpRequest';
+}]);
+
+app.controller("jocomProduct", function($scope,$http,$timeout,$filter,$compile) {
+    
+    $scope.suggestion_opt = [];
+    
+    $scope.PFindProduct = function(targetSearch,suggestionBox,position){
+        
+        var suggestionOpt = '';
+        $scope.suggestion_opt = [];
+        //console.log("Search Value: " + $("#"+targetSearch).val());
+        var product = $("#"+targetSearch).val();
+        //console.log(product);
+        if(product.length > 1){
+           var request = $http({
+                method: "post",
+                url: "/api/searchbaseproduct",
+                data: {keyword:product }
+            }).then(function successCallback(response) {
+                console.log(response.data);
+                $scope.suggestion_opt = response.data.search;
+                console.log("#"+suggestionBox);
+                
+                angular.forEach(response.data.search, function(value, key) {
+                   // console.log(value);
+                    suggestionOpt = suggestionOpt + '<div class="col-md-12 suggestion-opt" ><div style="float:right;"><a class="btn btn-default" ng-click="AddProductBase('+"'"+value.sku+"','"+value.name.replace("'",'')+"','"+position+"'"+')"><i class="fa fa-plus"></i></a></div><b>'+value.sku+'</b><br>'+value.name+'</div>';
+    
+                });
+                
+                //"+"'"+value.sku+"','"+value.name+"','"+suggestionBox+"'
+                var temp = $compile(suggestionOpt)($scope);
+                $("#"+suggestionBox).html(temp)
+                $("#"+suggestionBox).show()
+               // $compile(suggestionOpt)($scope);
+                
+                //console.log(suggestionOpt);
+                
+                // this callback will be called asynchronously
+                // when the response is available
+            }, function errorCallback(response) {
+                // called asynchronously if an error occurs
+                // or server returns response with an error status.
+            });
+           
+       }else{
+            $scope.suggestion_opt = [];
+            $(".suggestion-opt-box").css("display", "none")
+       }
+         
+
+    }
+    
+    $scope.AddProductBase= function(sku,name,position){
+       
+        var template = '<div class="col-md-12 sel-product-base" ><div class="input-group"><span class="input-group-addon" id="basic-addon1" style="text-align:left;">\n\
+            <b>'+sku+'</b>\n\
+            <div>'+name+'</div></span>\n\
+            <span class="input-group-addon" id="basic-addon1" style="width: 10px;"> \n\
+            <input class="form-control" style="width: 50px;min-width:50px;float: right;" name="productbase[option-'+position+'][sku]['+sku+']" type="text" value="1"></span>\n\
+            <span class="input-group-addon remove-product" id="basic-addon1" style="background-color:#d9ddea;cursor: pointer;" ><i class="fa fa-trash-o"></i></span> \n\
+            </div></div>';
+        
+        $("#attach-base-"+position).append(template);
+        
+        $(".suggestion-opt").hide();
+       
+    }
+    
+    $scope.AddOptionPrice= function(){
+
+        
+        $scope.suggestion_opt = [];
+        
+	var trLast = $('#prices').find('tr:last');
+	var row = 0;
+    var next_row = $('#prices').children().length + 1;
+        
+        
+
+	$('#prices tr').each(function (index) {
+		if ($('input[name="price[][default]"]:nth(' + index + ')').is(':checked')) {
+			row = index;
+		}
+	});
+
+	var trNew = trLast.clone();
+        //
+        trNew.find('.attach-base').html('');
+        trNew.find('.attach-base').attr('id','attach-base-'+next_row);
+        trNew.find('.attach-base').html('');
+        trNew.find('.suggestion-opt-box').attr('id','suggestion-opt-box-'+next_row); 
+        trNew.find('.input-search-base').attr('id','search-base-'+next_row); 
+        trNew.find('.input-search-base').attr('ng-keyup',"PFindProduct('search-base-"+next_row+"','suggestion-opt-box-"+next_row+"','"+next_row+"')"); 
+        
+        trNew.find('.actual_price').attr('id','price_'+next_row); 
+        trNew.find('.promo_price').attr('id','price_promo_'+next_row); 
+        
+        trNew.find('.actual_price_foreign').attr('id','actual_price_foreign_'+next_row); 
+        trNew.find('.promo_price_foreign').attr('id','promo_price_foreign_'+next_row); 
+        trNew.find('.actual_price_foreign').attr('target',next_row); 
+        trNew.find('.promo_price_foreign').attr('target',next_row); 
+        trNew.find('.ref_box').attr('id','ref_box_'+next_row); 
+        
+        
+        trNew.find('input').val('').end().appendTo(trLast);
+
+	$('#prices tr').each(function (index) {
+		$(this).children().first().html(index + 1);
+	});
+        var temp = $compile(trNew)($scope);
+	trLast.after(temp);
+	$('input[name="price[][default]"]:nth(' + row + ')').prop('checked', true);
+
+        
+    }
+    
+    $('body').on('keyup', '.actual_price_foreign, .promo_price_foreign', function() {
+        
+        var txt;
+        var pro_id = $(this).attr("target_pid");
+        var index_id = $(this).attr("target");
+        var option_id = $(this).attr("target_oid");
+        var price_actual = $("#actual_price_foreign_"+index_id).val();
+        var price_promo = $("#promo_price_foreign_"+index_id).val();
+         var to_country = $("#region_country_id").val();
+             
+        $.ajax({
+            method: "POST",
+            url: "/product/finalrate",
+            dataType:'json',
+            data: {
+                'product_id':pro_id,
+                'option_id':option_id,
+                'price_actual':price_actual,
+                'price_promo':price_promo,
+                'to_country':to_country
+            },
+                beforeSend: function(){
+            },
+            success: function(data) {
+                var domStr = ''; 
+                $("#ref_box_"+index_id).html('');
+                var coll = data;
+                if(coll.rate.length > 0){
+                    $.each(coll.rate, function( index,value ) {
+                        domStr = domStr + '<div class="row"><div class="col-md-12"><h4 class="ui horizontal divider header"> '+value.Country+' (1 USD = '+value.exchange_rate_to+' '+value.currency_code_to+')</h4><span>Actual : '+value.price+'</span><br><span>Promotion :  '+value.price_promo+'</span></div></div>';
+                        if(value.currency_code_to == 'MYR'){
+                            $("#price_"+index_id).val(value.price);
+                            $("#price_promo_"+index_id).val(value.price_promo);
+                        }
+                        
+                    });
+                    $("#ref_box_"+index_id).html(domStr);
+                }else{
+                    $("#ref_box_"+index_id).html(domStr);
+                }
+            }
+        })
+        
+    });
+    
+    $('body').on('click', '#enable_foreign_market', function() {
+        
+        if($("#enable_foreign_market").is(':checked')){
+            $(".local_price").hide();
+            $(".foreign_price").show();
+        }else{
+            $(".local_price").show();
+            $(".foreign_price").hide();
+        }
+       
+    });
+    
+    
+     
+});
+
+$( document ).ready(function() {
+
+    $('#datetimepicker_from').datetimepicker({
+        format: 'YYYY-MM-DD'
+    });
+    
+	$('#add-lnkproduct-btn').colorbox({
+        iframe:true, width:"90%", height:"90%",
+        onClosed:function(){
+           
+        }
+    });
+
+    $('#add-lnkproductbase-btn').colorbox({
+        iframe:true, width:"90%", height:"90%",
+        onClosed:function(){
+           
+        }
+    });
+
+    
+
+
+    $('body').on('click', '.remove-node', function() {
+        console.log($(this));
+         $(this).parent().parent().remove();
+        // $("#add-lnkproduct-btn").addClass('disabled');
+       //  $("#node_status").val('2');
+      //   $("#node_status_st").val('2');
+
+        // if($("#multipleNodeProductsTable").children().length <= 1){
+        //     alert('Must has minimum 1 Seller');
+        // }else{
+        //     var node_id = $(this).attr("node-id");
+        //     console.log(node_id);
+        //     $(".seller-cost-"+seller_id).remove();
+        //   $(this).parent().parent().remove();
+        // }
+        
+    });
+
+    if($("#multipleNodeProductsTable").children().length <= 1){
+    //	$("#add-lnkproduct-btn").addClass('disabled');
+    }
+
+    var is_basic = <?php echo $nodevalid;?>;
+
+    if(is_basic == 1){
+    	$(".linksproductheader").hide();
+    	$(".linksproductdetails").hide();
+    	
+    }
+
+    var is_base = <?php echo $basevalid;?>;
+
+    if(is_base == 1){
+    	$(".linksproductheaderbase").hide();
+    	$(".linksbaseproductdetails").hide();
+    	
+    }
+
+
+    
+
+    
+    var is_base_product = <?php echo $product->is_base_product == 1 ? '1':'0'; ?>;
+    
+    if(is_base_product == 1){
+        $("#is_base_product").prop("checked", true);
+        $("#add_price_option").hide();
+        $(".base-box").hide();
+    }
+        
+    $('body').on('change', '#region_country_id', function() {
+        loadOptionRegion($(this).val());
+    });
+
+   if(is_base_product == 1){
+
+   	var totalRowCount = $("#multipleNodeProductsTable tr").length;
+
+   		if(totalRowCount == 0){
+   			$("#add-lnkproduct-btn").removeClass('disabled');
+   		}
+
+   }
+
+
+    if(is_base_product == 0){
+
+    	$(".linksproductheader").hide();
+    	$(".linksproductdetails").hide();
+    	$(".linksproductheaderbase").hide();
+    	$(".linksbaseproductdetails").hide();
+    }
+
+    
+    $('body').on('click', '.remove-product', function() {
+       $(this).parent().parent().remove();
+    });
+    
+    $('body').on('click', '#is_base_product', function() {
+
+        //alert($("#prices").children().length);
+        
+        if($("#prices").children().length > 1 && $("#is_base_product").is(':checked')){
+            $("#is_base_product").prop("checked", false);
+            alert('Sorry. this product cannot be stock base as it have more than 1 price option')
+        }else if($("#is_base_product").is(':checked') == false){
+            $("#is_base_product").prop("checked", false);
+            $("#add_price_option").show();
+            $(".base-box").show();
+            
+        }else{
+            $("#is_base_product").prop("checked", true);
+            $("#add_price_option").hide();
+            $(".base-box").hide();
+            
+        }
+       
+    });
+    
+
+    function loadOptionRegion(countryID){
+        
+        $.ajax({
+                method: "POST",
+                url: "/region/country",
+                dataType:'json',
+                data: {
+                    'country_id':countryID
+                },
+                beforeSend: function(){
+                },
+                success: function(data) {
+                    console.log(data.data.region);
+                    var regionList = data.data.region;
+                    var str = '<option value="0">All Region</option>';
+                    $.each(regionList, function (index, value) {
+                        str = str + "<option value='"+value.id+"'>"+value.region+"</option>";
+                       console.log(str);
+                    });
+                    $("#region_id").html(str);
+                    
+                }
+          })
+        
+    }
+    
+//   $('body').on('click', '.remove-seller', function() {
+//       
+//        if($("#multipleSellerTable").children().length <= 1){
+//            alert('Must has minimum 1 Seller');
+//        }else{
+//            console.log($(this).parent().parent().remove());
+//        }
+//        
+//    });
+    
+   $('body').on('click', '.remove-seller', function() {
+        console.log($(this));
+        if($("#multipleSellerTable").children().length <= 1){
+            alert('Must has minimum 1 Seller');
+        }else{
+            var seller_id = $(this).attr("seller-id");
+            console.log(seller_id);
+            $(".seller-cost-"+seller_id).remove();
+          $(this).parent().parent().remove();
+        }
+        
+    });
+    
+    $("#add-duplicate-btn").click(function(){
+   	var pro_id = $(this).attr("target_pid");
+   		if($("#is_base_product").is(':checked') == true){
+   			alert('Sorry. this product is stock item. it will not be duplicated!');
+   		}
+   		else
+   		{
+
+   			var product_id = {{ $product->id }};
+   			
+   			// alert(product_id);
+
+   			$.ajax({
+                method: "POST",
+                url: "/product/duplicateadd/"+product_id,
+                data: {
+                    
+                },
+                beforeSend: function(){
+                },
+                success: function(data) {
+                    // alert(data);
+                	alert('Item has been successfully duplicated!');
+                	var link = '{{ URL::to('product/edit') }}';
+
+                	window.location = link+'/'+data;
+                    // console.log(data);
+                   
+                   
+                }
+          })
+   			
+
+   		}
+
+   });
+   
+   $("#add-seller-btn").click(function(){
+       
+        console.log($("#seller_name2").val());
+       
+        var seller_id = $("#seller_name2").val();
+        $.ajax({
+                method: "POST",
+                url: "/product/sellerinfo",
+                data: {
+                    'seller_id':seller_id
+                },
+                beforeSend: function(){
+                },
+                success: function(data) {
+                    //console.log(data);
+                    var str = '<tr><td>'+data.seller_name+'<input name="seller_multiple[]" value="'+data.seller_id+'" type="hidden"></td> <td>'+data.seller_state+'</td> <td><a seller-id="'+data.seller_id+'" class="btn btn-danger btn-xs remove-seller"><i class="fa fa-trash-o"></i> Remove</a></td></tr>';
+                   $("#multipleSellerTable").append(str);
+                   
+                    var strSeller = " <div class='form-group seller-cost-"+data.seller_id+"' > \
+                        <div class='col-sm-12'><i class='fa fa-caret-right help-block'></i> "+data.seller_name+"</div> \
+                        <label for='cost_price' class='col-sm-4 help-block'>Cost</label> \
+                        <div class='col-sm-8'><input id='price' type='text' class='form-control text-right' name='price[][cost_price]["+data.seller_id+"]' placeholder='Actual Price' value='0'></div> \
+                    </div>";
+    
+                    $(".list-seller-cost").append(strSeller);
+                   
+                }
+          })
+          
+        // console.log($(this).parent().parent().remove());
+   });
+   
+   $('body').on('click', '.gs-remove-seller', function() {
+       
+       var seller_id = $(this).attr("seller-id");
+       console.log($(this).parent().parent().remove());
+     
+  });
+
+   $("#add-gs-vendor-btn").click(function(){
+
+      var vendor_id = $("#gs_vendor_name").val();
+      var vendor_name = $("#gs_vendor_name option:selected").text();
+	  
+        if(vendor_id !== ''){
+            var str = '<tr><td>'+vendor_name+'<input name="vendor_multiple[]" value="'+vendor_id+'" type="hidden"></td>  <td><a seller-id="'+vendor_id+'" class="btn btn-danger btn-xs gs-remove-seller"><i class="fa fa-trash-o"></i> Remove</a></td></tr>';
+            $("#multipleVendorTable").append(str);
+        }else{
+            alert("Please add valid info!");
+        }
+        
+ });
+                
+    
+    
+    
+    
+});
+
+</script>
+@stop
+
+@section('script')
+// Update selected category on submit bounced back
+if ($('.old-categories').length > 0) {
+	$('#selected_category li').addClass('hide');
+	$('.old-categories').each(function () {
+		$('#available_' + $(this).val()).addClass('hide');
+
+		if ($(this).val() == $('#old-main-category').val()) {
+			$('#main_' + $(this).val()).addClass('hide');
+			$('#selected_' + $(this).val()).removeClass('hide').addClass('main');
+		} else {
+			$('#selected_' + $(this).val()).removeClass('hide');
+		}
+	});
+}
+
+// Main category
+$('#main_category li').click(function () {
+	var prefix = 'main_';
+	var id = this.id.substr(prefix.length);
+	$('#available_' + id).addClass('hide');
+
+	$('#main_category li').each(function () {
+		$(this).removeClass('hide');
+	});
+
+	$('#selected_category li.main').each(function () {
+		$(this).addClass('hide').removeClass('main');
+		$('#available_' + this.id.substr(('selected_').length)).removeClass('hide');
+	});
+
+	$('#main_' + id).addClass('hide');
+	$('#selected_' + id).removeClass('hide').addClass('main');
+	
+	if (id == 751) {
+		$('.new-arrival-div').show();
+	} else {
+		$('.new-arrival-div').hide();
+		$('#new_arrival_expire').val('');
+	}
+});
+
+// Available category
+$('#available_category li').click(function () {
+	var prefix = 'available_';
+	var id = this.id.substr(prefix.length);
+
+	$(this).addClass('hide');
+	$('#selected_' + id).removeClass('hide');
+	if (id == 751) {
+		$('.new-arrival-div').show();
+	} else {
+		$('.new-arrival-div').hide();
+		$('#new_arrival_expire').val('');
+	}
+});
+
+// Selected category
+$('#selected_category li').click(function () {
+	var prefix = 'selected_';
+	var id = this.id.substr(prefix.length);
+
+	if ( ! $('#selected_' + id).hasClass('main'))
+	{
+		$(this).addClass('hide');
+		$('#available_' + id).removeClass('hide');
+	}
+	if ($(this).attr('class') != 'main') {
+		if (id == 751) {
+			$('.new-arrival-div').hide();
+			$('#new_arrival_expire').val('');
+		}
+	}
+});
+
+// Add price option
+
+
+// Delete price option
+$(document).on('click', '#delete_price_option', function() {
+	if ($('.price_option').length != 1) {
+		$(this).closest('tr').remove();
+
+		$('#prices tr').each(function (index) {
+			$(this).children().first().html(index + 1);
+		});
+
+		if (!$('input[name="price[][default]"]:checked').val()) {
+			$('input[name="price[][default]"]:nth(0)').prop('checked', true);
+		}
+	} else {
+		bootbox.alert({
+			title: 'Error',
+			message: 'Please insert at least one (1) price option.',
+		});
+
+		$('input[name="price[][default]"]:nth(0)').prop('checked', true);
+	}
+});
+
+// Select zone
+$('select#delivery_fee').change(function () {
+	var zone_id		= $('select#delivery_fee option').filter(':selected').val();
+
+	if (zone_id > 0) {
+		$('#add_zone').prop('disabled', false);
+	} else {
+		$('#add_zone').prop('disabled', true);
+	}
+});
+
+// Add zone
+var zone_index	= {{ $zoneCounter + 1 }};
+
+$('#add_zone').click(function () {
+	var zone_id		= $('select#delivery_fee option').filter(':selected').val();
+	var zone_name	= $('select#delivery_fee option').filter(':selected').text();
+
+	if (zone_id > 0) {
+		$('#zone_div').append('<div id="zone_row_' + zone_index + '" class="form-group"><div class="col-lg-10 col-lg-offset-2"><input type="hidden" value="' + zone_id + '" name="zone_id[' + zone_index + ']"><div class="row"><div class="col-lg-3"><div class="input-group"><span class="input-group-addon"><i class="fa fa-globe fa-fw"></i></span><input type="text" name="zone_name[' + zone_index + ']" class="form-control" value="' + zone_name + '" disabled></div></div><div class="col-lg-2"><div class="input-group"><span class="input-group-addon">{{Config::get("constants.CURRENCY")}}</span><input type="text" name="zone_price[' + zone_index + ']" class="form-control text-right" placeholder="Delivery Fee"></div></div><div class="col-lg-2"><button type="button" class="btn btn-danger delete-zone" data-zone="' + zone_index + '"><i class="fa fa-minus"></i> Remove Zone</button></div></div></div></div>');
+		$('select#delivery_fee option[value="' + zone_id + '"]').remove();
+		$('#add_zone').prop('disabled', true);
+		$('select#delivery_fee').val(0);
+	}
+
+	zone_index++;
+});
+
+// Delete zone
+$(document).on('click', '.delete-zone', function() {
+	var zone_index	= $(this).data('zone');
+	var zone_id		= $('input[name="zone_id[' + zone_index + ']"]').val();
+	var zone_name	= $('input[name="zone_name[' + zone_index + ']"]').val();
+
+	$('#delivery_fee').append('<option value="' + zone_id + '">' + zone_name + '</option>');
+	$('#zone_row_' + zone_index).remove();
+});
+
+// Submit
+$('#update').submit(function(event) {
+	$('#selected_category li.main').not('.hide').each(function () {
+		var prefix = 'selected_';
+		var id = this.id.substr(prefix.length);
+		$('#categories').append('<input type="hidden" name="main_category" value="' + id + '">');
+	});
+
+	$('#selected_category li').not('.hide').each(function () {
+		var prefix = 'selected_';
+		var id = this.id.substr(prefix.length);
+
+		$('#categories').append('<input type="hidden" name="categories[]" value="' + id + '">');
+	});
+});
+
+//Delete Node 
+
+$(document).on("click", "#deleteItem", function(e) {
+        e.preventDefault();
+        $(this).closest("tr").remove();
+       // calculateTotal();
+         $("#add-lnkproduct-btn").removeClass('disabled');
+        if(!$('.product').length) {
+            $('#emptyproduct').show();
+            $('#grandTotal').remove();
+        }
+    });
+
+
+@stop
