@@ -1,3 +1,4 @@
+---- Transaction.php ----
 <?php
 
 use Illuminate\Auth\UserTrait;
